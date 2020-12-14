@@ -1,8 +1,6 @@
-# Welcome users bot sample
+# AutoSanityBot for APIs
 
-This bot has been created using [Bot Framework](https://dev.botframework.com), is shows how to welcome users when they join the conversation.
-
-This sample is a Spring Boot app and uses the Azure CLI and azure-webapp Maven plugin to deploy to Azure.
+This bot has been created using [Bot Framework](https://dev.botframework.com) and openapi-generator.
 
 ## Prerequisites
 
