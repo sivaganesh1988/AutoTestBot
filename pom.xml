@@ -95,7 +95,26 @@
           </resource>
         </resources>
         <plugins>
-            <plugin>
+                 <plugin>
+    <groupId>org.openapitools</groupId>
+    <artifactId>openapi-generator-maven-plugin</artifactId>
+    <version>4.3.1</version>
+    <executions>
+        <execution>
+            <goals>
+                <goal>generate</goal>
+            </goals>
+            <configuration>
+                <inputSpec>${project.basedir}/src/main/resources/pokeapi.yaml</inputSpec>
+                <generatorName>java</generatorName>
+                <configOptions>
+                   <sourceFolder>src/gen/java/main</sourceFolder>
+                </configOptions>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+                 <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
             </plugin>
