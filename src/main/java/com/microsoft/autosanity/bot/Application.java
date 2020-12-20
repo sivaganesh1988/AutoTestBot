@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.microsoft.bot.sample.welcomeuser;
+package com.microsoft.autosanity.bot;
 
 import com.microsoft.bot.integration.AdapterWithErrorHandler;
 import com.microsoft.bot.integration.BotFrameworkHttpAdapter;
@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Import;
  * extends the {@link com.microsoft.bot.builder.Bot} interface should be
  * annotated with @Component.
  *
- * @see WelcomeUserBot
+ * @see AutoSanityBot
  */
 @SpringBootApplication
 

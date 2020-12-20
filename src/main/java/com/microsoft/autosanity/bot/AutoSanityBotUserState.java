@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.microsoft.bot.sample.welcomeuser;
+package com.microsoft.autosanity.bot;
 
 /**
  * This is the welcome state for this sample.
@@ -13,9 +13,9 @@ package com.microsoft.bot.sample.welcomeuser;
  * annotation must be used.
  * </p>
  *
- * @see WelcomeUserBot
+ * @see AutoSanityBot
  */
-public class WelcomeUserState {
+public class AutoSanityBotUserState {
     private boolean didBotWelcomeUser;
 
     public boolean getDidBotWelcomeUser() {

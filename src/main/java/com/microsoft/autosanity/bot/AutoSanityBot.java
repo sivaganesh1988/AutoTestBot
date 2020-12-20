@@ -1,9 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.microsoft.bot.sample.welcomeuser;
+package com.microsoft.autosanity.bot;
 
 import com.codepoetics.protonpack.collectors.CompletableFutures;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.microsoft.bot.builder.ActivityHandler;
 import com.microsoft.bot.builder.MessageFactory;
 import com.microsoft.bot.builder.StatePropertyAccessor;
@@ -16,10 +19,15 @@ import com.microsoft.bot.schema.CardImage;
 import com.microsoft.bot.schema.ChannelAccount;
 import com.microsoft.bot.schema.HeroCard;
 import com.microsoft.bot.schema.ResourceResponse;
+import okhttp3.*;
+import okio.BufferedSink;
+import okio.Okio;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -34,19 +42,15 @@ import java.util.concurrent.CompletableFuture;
  * {@link UserState} and demonstrates welcome messages and state.
  * </p>
  *
- * @see WelcomeUserState
+ * @see AutoSanityBotUserState
  */
 @Component
-public class WelcomeUserBot extends ActivityHandler {
+public class AutoSanityBot extends ActivityHandler {
     // Messages sent to the user.
     private static final String WELCOMEMESSAGE =
-        "This is a simple Welcome Bot sample. This bot will introduce you "
-            + "to welcoming and greeting users. You can say 'intro' to see the "
-            + "introduction card. If you are running this bot in the Bot Framework "
-            + "Emulator, press the 'Start Over' button to simulate user joining "
-            + "a bot or a channel";
-
-    private static final String INFOMESSAGE =
+        "Welcome to autoSanity Bot. For the current demo we have a sample API preconfigured" +
+                "Send Show me a demo to read the preconfigued yaml and provide the test results";
+    final String INFOMESSAGE =
         "You are seeing this message because the bot received at least one "
             + "'ConversationUpdate' event, indicating you (and possibly others) "
             + "joined the conversation. If you are using the emulator, pressing "
@@ -73,7 +77,7 @@ public class WelcomeUserBot extends ActivityHandler {
     private UserState userState;
 
     @Autowired
-    public WelcomeUserBot(UserState withUserState) {
+    public AutoSanityBot(UserState withUserState) {
         userState = withUserState;
     }
 
@@ -104,7 +108,7 @@ public class WelcomeUserBot extends ActivityHandler {
      * @param turnContext  The context object for this turn.
      * @return A future task.
      */
-    @Override
+  /*  @Override
     protected CompletableFuture<Void> onMembersAdded(
         List<ChannelAccount> membersAdded,
         TurnContext turnContext
@@ -130,7 +134,7 @@ public class WelcomeUserBot extends ActivityHandler {
             .collect(CompletableFutures.toFutureList())
             .thenApply(resourceResponses -> null);
     }
-
+*/
     /**
      * This will prompt for a user name, after which it will send info about the
      * conversation. After sending information, the cycle restarts.
@@ -141,36 +145,32 @@ public class WelcomeUserBot extends ActivityHandler {
     @Override
     protected CompletableFuture<Void> onMessageActivity(TurnContext turnContext) {
         // Get state data from UserState.
-        StatePropertyAccessor<WelcomeUserState> stateAccessor =
+        StatePropertyAccessor<AutoSanityBotUserState> stateAccessor =
             userState.createProperty("WelcomeUserState");
-        CompletableFuture<WelcomeUserState> stateFuture =
-            stateAccessor.get(turnContext, WelcomeUserState::new);
+        CompletableFuture<AutoSanityBotUserState> stateFuture =
+            stateAccessor.get(turnContext, AutoSanityBotUserState::new);
 
         return stateFuture.thenApply(thisUserState -> {
-            if (!thisUserState.getDidBotWelcomeUser()) {
-                thisUserState.setDidBotWelcomeUser(true);
 
-                String userName = turnContext.getActivity().getFrom().getName();
-                return turnContext
-                    .sendActivities(
-                        MessageFactory.text(FIRST_WELCOME_ONE),
-                        MessageFactory.text(String.format(FIRST_WELCOME_TWO, userName))
-                    );
-            } else {
-                String text = turnContext.getActivity().getText().toLowerCase();
-                switch (text) {
+                String[] text = turnContext.getActivity().getText().toLowerCase().split(" ");
+                switch (text[0]) {
                     case "hello":
+                        return turnContext.sendActivities(MessageFactory.text(WELCOMEMESSAGE));
                     case "hi":
-                        return turnContext.sendActivities(MessageFactory.text("You said " + text));
-
-                    case "intro":
+                        return turnContext.sendActivities(MessageFactory.text(WELCOMEMESSAGE));
                     case "help":
                         return sendIntroCard(turnContext);
+                    case "yaml":
+                        try {
+                            return turnContext.sendActivities(MessageFactory.text(generateYaml(text[1])));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
                     default:
-                        return turnContext.sendActivity(WELCOMEMESSAGE);
+                        return turnContext.sendActivity("Default");
                 }
-            }
+
         })
             // make the return value happy.
             .thenApply(resourceResponse -> null);
@@ -178,16 +178,14 @@ public class WelcomeUserBot extends ActivityHandler {
 
     private CompletableFuture<ResourceResponse> sendIntroCard(TurnContext turnContext) {
         HeroCard card = new HeroCard() {{
-            setTitle("Welcome to Bot Framework!");
+            setTitle("Welcome to AutoSanityBot");
             setText(
-                "Welcome to Welcome Users bot sample! This Introduction card "
-                    + "is a great way to introduce your Bot to the user and suggest "
-                    + "some things to get them started. We use this opportunity to "
-                    + "recommend a few next steps for learning more creating and deploying bots."
+                "Welcome to a demo of autoSanityBot! or the current demo we have a sample API preconfigured\" +\n" +
+                        "                \"Send Show me a demo to read the preconfigued yaml and provide the test results\""
             );
         }};
 
-        card.setImages(Collections.singletonList(new CardImage() {
+      /*  card.setImages(Collections.singletonList(new CardImage() {
             {
                 setUrl("https://aka.ms/bf-welcome-card-image");
             }
@@ -219,9 +217,42 @@ public class WelcomeUserBot extends ActivityHandler {
                     "https://docs.microsoft.com/en-us/azure/bot-service/bot-builder-howto-deploy-azure?view=azure-bot-service-4.0"
                 );
             }})
-        );
+        );*/
 
         Activity response = MessageFactory.attachment(card.toAttachment());
         return turnContext.sendActivity(response);
+    }
+
+    public String generateYaml(String path) throws IOException {
+
+        OkHttpClient client = new OkHttpClient();
+        Gson gson = new Gson();
+
+        String body = "{\"openAPIUrl\": \"URI\"}";
+        body = body.replace("URI",path);
+
+        RequestBody jsonBody = RequestBody.create(
+                MediaType.parse("application/json"), body);
+
+        Request request = new Request.Builder()
+                .url("http://localhost:8888/api/gen/clients/java")
+                .post(jsonBody)
+                .build();
+
+        Call call = client.newCall(request);
+        Response response = call.execute();
+       JsonElement element = gson.fromJson(response.body().string(),JsonElement.class);
+        JsonObject jsonObj = element.getAsJsonObject();
+        String link = jsonObj.get("link").getAsString();
+
+        Request downloadRequest = new Request.Builder().url(link).get().build();
+
+        Response response1 = client.newCall(downloadRequest).execute();
+        File file = new File("C:\\Users\\intel\\Downloads\\yaml" + "Generated.zip");
+        final BufferedSink sink = Okio.buffer(Okio.sink(file));
+        sink.writeAll(response1.body().source());
+        sink.close();
+
+        return "Code is generated for the given yaml and can be accessed at " + file.getAbsolutePath();
     }
 }
