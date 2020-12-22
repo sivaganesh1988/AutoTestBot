@@ -1,4 +1,4 @@
-# AutoSanityBot for APIs
+# AutoTestBot for APIs
 
 This bot has been created using [Bot Framework](https://dev.botframework.com) and openapi-generator.
 
